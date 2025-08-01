@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Send, Loader, User, Bot, Search } from 'lucide-react';
 
+const baseurl = import.meta.env.VITE_BASE_URL;
+
 const TeacherBot = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
@@ -23,14 +25,10 @@ const TeacherBot = () => {
   // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
-    
-    // Greeting animation on first load
-    const timer = setTimeout(() => {
-      setShowTyping(true);
-      simulateRealisticTyping("Hello! I can help you find student information. Try asking about a student by name, email, or roll number.");
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    // Remove the complex greeting animation - just set the initial message directly
+    setMessages([
+      { type: 'bot', content: 'Hello! I can help you find student information. Try asking about a student by name, email, or roll number.' }
+    ]);
   }, []);
 
   // Clean up typing animation on unmount
@@ -43,38 +41,51 @@ const TeacherBot = () => {
   }, []);
 
   const formatStudentData = (student) => {
-    if (!student) return "No student found with that information.";
+    if (!student || typeof student !== 'object') {
+      return "Invalid student data received.";
+    }
+    
+    // Provide fallbacks for missing data
+    const studentData = {
+      name: student.name || 'N/A',
+      roll_no: student.roll_no || 'N/A',
+      class: student.class || 'N/A',
+      email: student.email || 'N/A',
+      phone_no: student.phone_no || 'N/A',
+      dob: student.dob || null,
+      address: student.address || 'N/A'
+    };
     
     return (
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100 shadow-sm transition-all hover:shadow-md">
         <h3 className="font-bold text-lg text-blue-800 mb-2 flex items-center">
-          <span className="bg-blue-100 p-1 rounded-full mr-2 animate-pulse">👤</span> 
-          {student.name}
+          <span className="bg-blue-100 p-1 rounded-full mr-2">👤</span> 
+          {studentData.name}
         </h3>
         <div className="grid grid-cols-2 gap-3 mt-3">
-          <div className="bg-white bg-opacity-60 p-2 rounded transform transition-all hover:scale-105">
+          <div className="bg-white bg-opacity-60 p-2 rounded">
             <p className="text-sm font-medium text-indigo-600">Roll No</p>
-            <p className="font-semibold">{student.roll_no}</p>
+            <p className="font-semibold">{studentData.roll_no}</p>
           </div>
-          <div className="bg-white bg-opacity-60 p-2 rounded transform transition-all hover:scale-105">
+          <div className="bg-white bg-opacity-60 p-2 rounded">
             <p className="text-sm font-medium text-indigo-600">Class</p>
-            <p className="font-semibold">{student.class}</p>
+            <p className="font-semibold">{studentData.class}</p>
           </div>
-          <div className="bg-white bg-opacity-60 p-2 rounded transform transition-all hover:scale-105">
+          <div className="bg-white bg-opacity-60 p-2 rounded">
             <p className="text-sm font-medium text-indigo-600">Email</p>
-            <p className="text-sm break-all">{student.email}</p>
+            <p className="text-sm break-all">{studentData.email}</p>
           </div>
-          <div className="bg-white bg-opacity-60 p-2 rounded transform transition-all hover:scale-105">
+          <div className="bg-white bg-opacity-60 p-2 rounded">
             <p className="text-sm font-medium text-indigo-600">Phone</p>
-            <p>{student.phone_no}</p>
+            <p>{studentData.phone_no}</p>
           </div>
-          <div className="bg-white bg-opacity-60 p-2 rounded transform transition-all hover:scale-105">
+          <div className="bg-white bg-opacity-60 p-2 rounded">
             <p className="text-sm font-medium text-indigo-600">Date of Birth</p>
-            <p>{new Date(student.dob).toLocaleDateString()}</p>
+            <p>{studentData.dob ? new Date(studentData.dob).toLocaleDateString() : 'N/A'}</p>
           </div>
-          <div className="bg-white bg-opacity-60 p-2 rounded transform transition-all hover:scale-105">
+          <div className="bg-white bg-opacity-60 p-2 rounded">
             <p className="text-sm font-medium text-indigo-600">Address</p>
-            <p className="text-sm">{student.address}</p>
+            <p className="text-sm">{studentData.address}</p>
           </div>
         </div>
       </div>
@@ -109,22 +120,16 @@ const TeacherBot = () => {
     e.preventDefault();
     if (!input.trim()) return;
     
-    // Add user message to chat with popping animation
     const userMessage = { type: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
     
-    // Clear input with transition effect
     setInput('');
     inputRef.current?.focus();
     setLoading(true);
-    
-    // Show typing indicator with pre-response pause
-    setTimeout(() => {
-      setShowTyping(true);
-    }, 700);
+    setShowTyping(true);
     
     try {
-      const response = await axios.post("http://localhost:8000/query", {
+      const response = await axios.post(`${baseurl}/chatbot/query`, {
         query: input
       }, {
         headers: {
@@ -132,44 +137,42 @@ const TeacherBot = () => {
         }
       });
       
-      const students = response.data.results;
+      // Add proper data validation
+      const students = response.data?.results;
       
-      // Realistic delay based on content length
-      setTimeout(() => {
-        if (students && students.length > 0) {
-          // Show typing for first student
-          const firstStudentMessage = "I found the student you're looking for:";
-          
-          // Start realistic typing for text response
-          simulateRealisticTyping(firstStudentMessage);
-          
-          // After typing first message, show all results
-          setTimeout(() => {
-            students.forEach((student, index) => {
-              setTimeout(() => {
-                setMessages(prev => [...prev, { 
-                  type: 'bot', 
-                  content: formatStudentData(student)
-                }]);
-              }, index * 300); // Stagger multiple results
-            });
-            setLoading(false);
-          }, firstStudentMessage.length * 40 + 500);
-          
-        } else {
-          // No students found
-          const notFoundMessage = "I couldn't find any student matching your query. Please try again with a different name, email, or roll number.";
-          simulateRealisticTyping(notFoundMessage);
-          setLoading(false);
-        }
-      }, 1500);
+      setShowTyping(false);
+      setLoading(false);
+      
+      if (students && Array.isArray(students) && students.length > 0) {
+        // Add confirmation message first
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: 'I found the student information you requested:' 
+        }]);
+        
+        // Add each student result
+        students.forEach((student) => {
+          if (student) { // Validate student object exists
+            setMessages(prev => [...prev, { 
+              type: 'bot', 
+              content: formatStudentData(student)
+            }]);
+          }
+        });
+      } else {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: "I couldn't find any student matching your query. Please try again with a different name, email, or roll number." 
+        }]);
+      }
     } catch (err) {
       console.error("Error fetching data:", err);
-      setTimeout(() => {
-        const errorMessage = "Sorry, I encountered an error while searching for student information. Please try again later.";
-        simulateRealisticTyping(errorMessage);
-        setLoading(false);
-      }, 1500);
+      setShowTyping(false);
+      setLoading(false);
+      setMessages(prev => [...prev, { 
+        type: 'bot', 
+        content: "Sorry, I encountered an error while searching for student information. Please try again later." 
+      }]);
     }
   };
 

@@ -41,6 +41,7 @@ import ExamRouter from "./routes/exam.routes.js"
 import LessonPlanRouter from "./routes/lessonPlan.routes.js"
 import smsRouter from "./routes/sms.routers.js"
 import verifyLoginRouter from "./routes/verifyLogin.routes.js"
+import chatbotRouter from "./routes/chatbot.routes.js";
 
 import Announcerouter from "./routes/announce.routes.js"
 app.get("/", (req, res) => {
@@ -58,6 +59,7 @@ app.use("/api/v1/exams", ExamRouter);
 app.use("/api/v1/lessonPlans", LessonPlanRouter);
 app.use("/api/v1/sms", smsRouter); 
 app.use("/api/v1/verify", verifyLoginRouter); 
+app.use("/api/v1/chatbot", chatbotRouter);
 
 app.use("/api/v1/sms", smsRouter);
 app.use("/api/v1/announcements", Announcerouter);
