@@ -1,11 +1,11 @@
-# Render Blueprint: deploys MongoDB, backend (Docker), and frontend (Docker)
+# Render Blueprint: deploys MongoDB, backend (Docker), and frontend (static site)
 # Docs: https://render.com/docs/infrastructure-as-code
 
 databases:
-  - name: edustream-mongo                # Render-managed Mongo instance
-    databaseName: edustream              # initial DB name inside Mongo
-    plan: free                           # free tier is enough for dev
-    ipAllowList: []                      # empty ⇒ accessible only to Render services
+  - name: edustream-mongo
+    databaseName: edustream
+    plan: free
+    ipAllowList: []
 
 services:
   # Backend: Node/Express API built from Dockerfile
@@ -13,20 +13,19 @@ services:
     name: edustream-backend
     env: docker
     plan: free
-    dockerfilePath: Backendtemplate/Dockerfile
-    autoDeploy: true                     # redeploy automatically on git push
+    dockerfilePath: ./Backendtemplate/Dockerfile
+    autoDeploy: true
     envVars:
       - key: PORT
         value: 8080
-      - key: MONGODB_URI                 # inject managed DB conn string
+      - key: MONGODB_URI
         fromDatabase:
           name: edustream-mongo
           property: connectionString
-      # ----- Secrets (set placeholder values; update in Render dashboard) -----
       - key: ACCESS_TOKEN_SECRET
         value: "CHANGEME"
       - key: REFRESH_TOKEN_SECRET
-        value: "CHANGEME"
+        value: "CHANGEME" 
       - key: TWILIO_ACCOUNT_SID
         value: "CHANGEME"
       - key: TWILIO_AUTH_TOKEN
@@ -36,7 +35,7 @@ services:
       - key: GEMINI_API_KEY
         value: "CHANGEME"
       - key: CLIENT_URL
-        value: https://edustream-frontend.onrender.com
+        value: "https://edustream-frontend.onrender.com"
 
 staticSites:
   - name: edustream-frontend
@@ -45,4 +44,4 @@ staticSites:
     rootDir: Frontend
     envVars:
       - key: VITE_BASE_URL
-        value: https://edustream-backend.onrender.com/api/v1
+        value: "https://edustream-backend.onrender.com/api/v1"
