@@ -38,9 +38,8 @@ services:
       - key: CLIENT_URL
         value: https://edustream-frontend.onrender.com
 
-  # Frontend: build & deploy as Render Static Site (no Docker needed)
-  - type: static_site
-    name: edustream-frontend
+staticSites:
+  - name: edustream-frontend
     buildCommand: npm ci && npm run build
     publishPath: dist
     rootDir: Frontend
