@@ -38,13 +38,12 @@ services:
       - key: CLIENT_URL
         value: https://edustream-frontend.onrender.com
 
-  # Frontend: built by Dockerfile (Nginx static site)
-  - type: web
+  # Frontend: build & deploy as Render Static Site (no Docker needed)
+  - type: static
     name: edustream-frontend
-    env: docker
-    plan: free
-    dockerfilePath: Frontend/Dockerfile
-    autoDeploy: true
+    buildCommand: npm ci && npm run build
+    publishPath: dist
+    rootDir: Frontend
     envVars:
       - key: VITE_BASE_URL
         value: https://edustream-backend.onrender.com/api/v1
