@@ -38,12 +38,13 @@ services:
       - key: CLIENT_URL
         value: https://edustream-frontend.onrender.com
 
-staticSites:
-  # ─────────── Frontend ───────────
-  - name: edustream-frontend
-    rootDir: Frontend              # folder in the repo that contains package.json
+  # ─────────── Frontend (static site) ───────────
+  - type: web
+    name: edustream-frontend
+    runtime: static
+    rootDir: Frontend              # folder containing the frontend code
     buildCommand: npm ci && npm run build
-    publishPath: dist              # Vite’s default output folder
+    staticPublishPath: dist        # Vite’s default output folder
     envVars:
       - key: VITE_BASE_URL
         value: https://edustream-backend.onrender.com/api/v1
