@@ -48,4 +48,8 @@ services:
     staticPublishPath: dist        # Vite’s default output folder
     envVars:
       - key: VITE_BASE_URL
-        value: https://edustream-backend.onrender.com/api/v1
+        value: https://edustream-backend-8iyx.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
