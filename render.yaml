@@ -1,44 +1,67 @@
-databases:
-  - name: edustream-mongo
-    databaseName: edustream
-    plan: free
-    ipAllowList: []
-
 services:
+  # MongoDB Database
+  - type: pserv
+    name: edustream-mongo
+    env: docker
+    dockerfilePath: ./Dockerfile.mongo
+    plan: starter
+    disk:
+      name: mongo-data
+      mountPath: /data/db
+      sizeGB: 1
+    envVars:
+      - key: MONGO_INITDB_DATABASE
+        value: edustream
+
+  # Backend Service
   - type: web
     name: edustream-backend
-    runtime: docker
-    plan: free
+    env: docker
     dockerfilePath: ./Backendtemplate/Dockerfile
-    autoDeploy: true
+    plan: starter
+    buildCommand: ""
+    startCommand: ""
+    healthCheckPath: /api/v1/health
     envVars:
       - key: PORT
         value: 8080
       - key: MONGODB_URI
-        fromDatabase:
+        fromService:
+          type: pserv
           name: edustream-mongo
           property: connectionString
-      - key: ACCESS_TOKEN_SECRET
-        sync: false
-      - key: REFRESH_TOKEN_SECRET
-        sync: false
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_PHONE_NUMBER
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: CLIENT_URL
-        value: https://edustream-frontend.onrender.com
+      - key: NODE_ENV
+        value: production
+      # Add other environment variables from your .env file here
+      # - key: JWT_SECRET
+      #   generateValue: true
+      # - key: API_KEY
+      #   value: your-api-key
 
+  # Frontend Service
   - type: web
     name: edustream-frontend
-    runtime: static
-    buildCommand: npm ci && npm run build
-    staticPublishPath: ./dist
-    rootDir: Frontend
+    env: docker
+    dockerfilePath: ./Frontend/Dockerfile
+    plan: starter
+    buildCommand: ""
+    startCommand: ""
+    buildArgs:
+      - key: VITE_BASE_URL
+        fromService:
+          type: web
+          name: edustream-backend
+          property: host
     envVars:
       - key: VITE_BASE_URL
-        value: https://edustream-backend.onrender.com/api/v1
+        fromService:
+          type: web
+          name: edustream-backend
+          property: host
+
+databases:
+  # Alternative: Use Render's managed MongoDB (recommended for production)
+  # - name: edustream-db
+  #   databaseName: edustream
+  #   user: edustream_user
+  #   plan: starter
