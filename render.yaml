@@ -1,0 +1,50 @@
+# Render Blueprint: deploys MongoDB, backend (Docker), and frontend (Docker)
+# Docs: https://render.com/docs/infrastructure-as-code
+
+databases:
+  - name: edustream-mongo                # Render-managed Mongo instance
+    databaseName: edustream              # initial DB name inside Mongo
+    plan: free                           # free tier is enough for dev
+    ipAllowList: []                      # empty ⇒ accessible only to Render services
+
+services:
+  # Backend: Node/Express API built from Dockerfile
+  - type: web
+    name: edustream-backend
+    env: docker
+    plan: free
+    dockerfilePath: Backendtemplate/Dockerfile
+    autoDeploy: true                     # redeploy automatically on git push
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: MONGODB_URI                 # inject managed DB conn string
+        fromDatabase:
+          name: edustream-mongo
+          property: connectionString
+      # ----- Secrets (set placeholder values; update in Render dashboard) -----
+      - key: ACCESS_TOKEN_SECRET
+        value: "CHANGEME"
+      - key: REFRESH_TOKEN_SECRET
+        value: "CHANGEME"
+      - key: TWILIO_ACCOUNT_SID
+        value: "CHANGEME"
+      - key: TWILIO_AUTH_TOKEN
+        value: "CHANGEME"
+      - key: TWILIO_PHONE_NUMBER
+        value: "CHANGEME"
+      - key: GEMINI_API_KEY
+        value: "CHANGEME"
+      - key: CLIENT_URL
+        value: https://edustream-frontend.onrender.com
+
+  # Frontend: built by Dockerfile (Nginx static site)
+  - type: web
+    name: edustream-frontend
+    env: docker
+    plan: free
+    dockerfilePath: Frontend/Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: VITE_BASE_URL
+        value: https://edustream-backend.onrender.com/api/v1
