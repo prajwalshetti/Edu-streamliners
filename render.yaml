@@ -1,6 +1,3 @@
-# Render Blueprint: deploys MongoDB, backend (Docker), and frontend (static site)
-# Docs: https://render.com/docs/infrastructure-as-code
-
 databases:
   - name: edustream-mongo
     databaseName: edustream
@@ -8,10 +5,9 @@ databases:
     ipAllowList: []
 
 services:
-  # Backend: Node/Express API built from Dockerfile
   - type: web
     name: edustream-backend
-    env: docker
+    runtime: docker
     plan: free
     dockerfilePath: ./Backendtemplate/Dockerfile
     autoDeploy: true
@@ -23,25 +19,26 @@ services:
           name: edustream-mongo
           property: connectionString
       - key: ACCESS_TOKEN_SECRET
-        value: "CHANGEME"
+        sync: false
       - key: REFRESH_TOKEN_SECRET
-        value: "CHANGEME" 
+        sync: false
       - key: TWILIO_ACCOUNT_SID
-        value: "CHANGEME"
+        sync: false
       - key: TWILIO_AUTH_TOKEN
-        value: "CHANGEME"
+        sync: false
       - key: TWILIO_PHONE_NUMBER
-        value: "CHANGEME"
+        sync: false
       - key: GEMINI_API_KEY
-        value: "CHANGEME"
+        sync: false
       - key: CLIENT_URL
-        value: "https://edustream-frontend.onrender.com"
+        value: https://edustream-frontend.onrender.com
 
-staticSites:
-  - name: edustream-frontend
+  - type: web
+    name: edustream-frontend
+    runtime: static
     buildCommand: npm ci && npm run build
-    publishPath: dist
+    staticPublishPath: ./dist
     rootDir: Frontend
     envVars:
       - key: VITE_BASE_URL
-        value: "https://edustream-backend.onrender.com/api/v1"
+        value: https://edustream-backend.onrender.com/api/v1
