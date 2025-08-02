@@ -36,11 +36,11 @@ services:
       - key: GEMINI_API_KEY
         value: "CHANGEME"
       - key: CLIENT_URL
-        value: https://edustream-frontend.onrender.com
+        value: https://edustream-frontend-static.onrender.com
 
   # ─────────── Frontend (static site) ───────────
   - type: web
-    name: edustream-frontend
+    name: edustream-frontend-static
     runtime: static
     rootDir: Frontend              # folder containing the frontend code
     buildCommand: npm ci && npm run build
