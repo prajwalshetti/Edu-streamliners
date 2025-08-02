@@ -1,0 +1,18 @@
+# Global ignores for all services
+.git
+.gitignore
+README.md
+*.log
+
+# Node
+node_modules
+npm-debug.log
+
+# Vite / React build output
+Frontend/dist
+
+# Local env & editor files
+.env
+**/.env*
+.DS_Store
+.vscode

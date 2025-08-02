@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:6
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"  # optional: expose for local dev
+
+  backend:
+    build: ./Backendtemplate
+    # pass env vars from existing .env file (ensure file exists in context)
+    env_file:
+      - ./Backendtemplate/.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    environment:
+      # example: override PORT if not set in .env
+      - PORT=8080
+      - MONGODB_URI=mongodb://mongo:27017/edustream
+
+  frontend:
+    build:
+      context: ./Frontend
+      args:
+        VITE_BASE_URL: http://localhost:8080/api/v1
+    environment:
+      - VITE_BASE_URL=http://localhost:8080/api/v1
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
