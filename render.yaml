@@ -1,67 +1,49 @@
-services:
-  # MongoDB Database
-  - type: pserv
-    name: edustream-mongo
-    env: docker
-    dockerfilePath: ./Dockerfile.mongo
-    plan: starter
-    disk:
-      name: mongo-data
-      mountPath: /data/db
-      sizeGB: 1
-    envVars:
-      - key: MONGO_INITDB_DATABASE
-        value: edustream
+# Render Blueprint ─ deploys a managed MongoDB instance,
+# a Docker-based Node/Express backend, and a static-site Vite frontend.
 
-  # Backend Service
+databases:
+  - name: edustream-mongo          # Render-managed Mongo cluster
+    databaseName: edustream        # initial DB created for you
+    plan: free                     # upgrade later if you need more storage
+    ipAllowList: []                # empty ⇒ only Render services can reach it
+
+services:
+  # ─────────── Backend ───────────
   - type: web
     name: edustream-backend
     env: docker
-    dockerfilePath: ./Backendtemplate/Dockerfile
-    plan: starter
-    buildCommand: ""
-    startCommand: ""
-    healthCheckPath: /api/v1/health
+    plan: free                     # “Starter” / paid is optional
+    dockerfilePath: Backendtemplate/Dockerfile
+    autoDeploy: true               # redeploy on every git push
     envVars:
       - key: PORT
-        value: 8080
-      - key: MONGODB_URI
-        fromService:
-          type: pserv
+        value: "8080"
+      - key: MONGODB_URI           # inject managed DB connection string
+        fromDatabase:
           name: edustream-mongo
           property: connectionString
-      - key: NODE_ENV
-        value: production
-      # Add other environment variables from your .env file here
-      # - key: JWT_SECRET
-      #   generateValue: true
-      # - key: API_KEY
-      #   value: your-api-key
+      # ─── your secrets (placeholders, set real values in the dashboard) ───
+      - key: ACCESS_TOKEN_SECRET
+        value: "CHANGEME"
+      - key: REFRESH_TOKEN_SECRET
+        value: "CHANGEME"
+      - key: TWILIO_ACCOUNT_SID
+        value: "CHANGEME"
+      - key: TWILIO_AUTH_TOKEN
+        value: "CHANGEME"
+      - key: TWILIO_PHONE_NUMBER
+        value: "CHANGEME"
+      - key: GEMINI_API_KEY
+        value: "CHANGEME"
+      - key: CLIENT_URL
+        value: https://edustream-frontend.onrender.com
 
-  # Frontend Service
-  - type: web
-    name: edustream-frontend
-    env: docker
-    dockerfilePath: ./Frontend/Dockerfile
-    plan: starter
-    buildCommand: ""
-    startCommand: ""
-    buildArgs:
-      - key: VITE_BASE_URL
-        fromService:
-          type: web
-          name: edustream-backend
-          property: host
+staticSites:
+  # ─────────── Frontend ───────────
+  - name: edustream-frontend
+    rootDir: Frontend              # folder in the repo that contains package.json
+    buildCommand: npm ci && npm run build
+    publishPath: dist              # Vite’s default output folder
     envVars:
       - key: VITE_BASE_URL
-        fromService:
-          type: web
-          name: edustream-backend
-          property: host
-
-databases:
-  # Alternative: Use Render's managed MongoDB (recommended for production)
-  # - name: edustream-db
-  #   databaseName: edustream
-  #   user: edustream_user
-  #   plan: starter
+        value: https://edustream-backend.onrender.com/api/v1
