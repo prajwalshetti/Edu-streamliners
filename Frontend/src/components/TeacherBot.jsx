@@ -166,7 +166,7 @@ const TeacherBot = () => {
         }]);
       }
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error("Error fetching data:", err.response?.data);
       setShowTyping(false);
       setLoading(false);
       setMessages(prev => [...prev, { 

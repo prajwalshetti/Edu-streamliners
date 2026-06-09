@@ -4,7 +4,7 @@ import {Student} from "../models/student.models.js";
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // Prompt template
 const PROMPT_TEMPLATE = `You are a MongoDB query generator for a student information system. Convert natural language queries to MongoDB find queries.
@@ -163,14 +163,22 @@ export const handleChatbotQuery = async (req, res) => {
 
         // Generate AI response
         const prompt = PROMPT_TEMPLATE.replace('{user_input}', query);
+        console.log("================================");
+        console.log("USER QUERY:", query);
+        console.log("================================");
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
 
-        console.log("AI Response:", text);
+        console.log("================================");
+        console.log("AI RAW RESPONSE:");
+        console.log(text);
+        console.log("================================");
 
         // Parse the AI response
         const aiResult = cleanJsonResponse(text);
+        console.log("PARSED AI RESPONSE:");
+        console.log(aiResult);
         const mongoQuery = aiResult.query || {};
 
         if (!mongoQuery || Object.keys(mongoQuery).length === 0) {
